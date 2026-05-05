@@ -1,0 +1,215 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+
+
+
+
+
+
+
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --neon-cyan: #00f5ff;
+  --neon-violet: #bf5af2;
+  --neon-green: #30d158;
+  --dark-bg: #060612;
+  --glass-bg: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+* {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+body {
+  background: var(--dark-bg);
+  overflow: hidden;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0, 245, 255, 0.2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 245, 255, 0.5); }
+
+/* ── Animated mesh background ── */
+.mesh-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, rgba(0, 245, 255, 0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 90%, rgba(191, 90, 242, 0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 50% at 50% 50%, rgba(48, 209, 88, 0.03) 0%, transparent 70%),
+    #060612;
+  animation: meshShift 12s ease-in-out infinite alternate;
+}
+
+@keyframes meshShift {
+  0%   { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(30deg); }
+}
+
+/* ── Grid overlay ── */
+.grid-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(0, 245, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* ── Glass panel ── */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 1px solid var(--glass-border);
+}
+
+/* ── Neon glow border ── */
+.neon-border {
+  box-shadow:
+    0 0 0 1px rgba(0, 245, 255, 0.15),
+    0 0 20px rgba(0, 245, 255, 0.05),
+    inset 0 0 20px rgba(0, 245, 255, 0.02);
+}
+
+/* ── Message animations ── */
+.msg-mine {
+  animation: slideFromRight 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+.msg-other {
+  animation: slideFromLeft 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes slideFromRight {
+  from { opacity: 0; transform: translateX(20px) scale(0.92); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes slideFromLeft {
+  from { opacity: 0; transform: translateX(-20px) scale(0.92); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* ── Typing dots ── */
+.typing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--neon-cyan);
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ── Pulse ring on avatar ── */
+.avatar-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 2px solid var(--neon-cyan);
+  animation: avatarPulse 2s ease-out infinite;
+}
+
+@keyframes avatarPulse {
+  0%   { opacity: 0.8; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
+
+/* ── Online dot ── */
+.online-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--neon-green);
+  border-radius: 50%;
+  box-shadow: 0 0 8px var(--neon-green);
+  animation: onlinePulse 2s ease-in-out infinite;
+}
+
+@keyframes onlinePulse {
+  0%, 100% { box-shadow: 0 0 6px var(--neon-green); }
+  50% { box-shadow: 0 0 14px var(--neon-green), 0 0 24px rgba(48, 209, 88, 0.3); }
+}
+
+/* ── Send button glow ── */
+.send-btn {
+  background: linear-gradient(135deg, #00f5ff, #bf5af2);
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+.send-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, #bf5af2, #00f5ff);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.send-btn:hover::before { opacity: 1; }
+.send-btn:hover {
+  box-shadow: 0 0 20px rgba(0, 245, 255, 0.5), 0 0 40px rgba(191, 90, 242, 0.3);
+  transform: scale(1.05);
+}
+.send-btn:active { transform: scale(0.97); }
+
+/* ── Input focus glow ── */
+.chat-input:focus {
+  outline: none;
+}
+.input-wrapper:focus-within {
+  border-color: rgba(0, 245, 255, 0.4) !important;
+  box-shadow: 0 0 0 1px rgba(0, 245, 255, 0.2), 0 0 20px rgba(0, 245, 255, 0.08);
+}
+
+/* ── Name popup ── */
+.popup-enter {
+  animation: popupIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes popupIn {
+  from { opacity: 0; transform: scale(0.85) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Neon text ── */
+.neon-text {
+  color: var(--neon-cyan);
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+
+/* ── Syne font for headings ── */
+.font-display {
+  font-family: 'Syne', sans-serif;
+}
+
+/* ── Scanline effect ── */
+.scanline {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.05) 2px,
+    rgba(0, 0, 0, 0.05) 4px
+  );
+}
