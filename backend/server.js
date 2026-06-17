@@ -257,22 +257,18 @@ io.on("connection",(socket)=>{
     // GROUP MESSAGE
 
     socket.on(
+ "chatMessage",
+ (msg)=>{
+
+
+    io.to(ROOM)
+    .emit(
         "chatMessage",
-        (msg)=>{
-
-
-            // send only to other users
-
-            socket.to(ROOM)
-            .emit(
-                "chatMessage",
-                msg
-            );
-
-
-        }
+        msg
     );
 
+
+});
 
 
 

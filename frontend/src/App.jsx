@@ -442,30 +442,24 @@ export default function App(){
 
 
         socketInstance.on(
-            "privateTyping",
-            (name)=>{
+    "privateTyping",
+    (name)=>{
 
+        setTypingUser(name);
 
-                setTypingUser(name);
-
-
-            }
-        );
-
+    }
+);
 
 
 
+socketInstance.on(
+    "stopPrivateTyping",
+    ()=>{
 
-        socketInstance.on(
-            "stopPrivateTyping",
-            ()=>{
+        setTypingUser("");
 
-
-                setTypingUser("");
-
-            }
-        );
-
+    }
+);
 
 
 

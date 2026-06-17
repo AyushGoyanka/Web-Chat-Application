@@ -324,7 +324,6 @@
 
 
 
-
 import { useState, useRef, useEffect } from "react";
 
 import Header from "./Header";
@@ -341,14 +340,6 @@ export default function Chat({
     userName,
 
     messages,
-
-
-    groupMessages,
-    setGroupMessages,
-
-
-    privateMessages,
-    setPrivateMessages,
 
 
     users,
@@ -371,13 +362,9 @@ export default function Chat({
 }) {
 
 
-
     const [text,setText] = useState("");
 
     const timer = useRef(null);
-
-
-
 
 
 
@@ -389,7 +376,7 @@ export default function Chat({
     function sendMessage(){
 
 
-        const value=text.trim();
+        const value = text.trim();
 
 
         if(!value) return;
@@ -397,21 +384,15 @@ export default function Chat({
 
 
 
+        const msg = {
 
-        const msg={
+            id: Date.now(),
 
+            sender: userName,
 
-            id:Date.now(),
+            text: value,
 
-
-            sender:userName,
-
-
-            text:value,
-
-
-            ts:Date.now()
-
+            ts: Date.now()
 
         };
 
@@ -420,26 +401,18 @@ export default function Chat({
 
 
 
-
         // GROUP CHAT
 
-
-        if(selectedChat==="GROUP"){
-
+        if(selectedChat === "GROUP"){
 
 
             socket.current.emit(
-
                 "chatMessage",
-
                 msg
-
             );
 
 
         }
-
-
 
 
 
@@ -448,47 +421,34 @@ export default function Chat({
 
         // PRIVATE CHAT
 
-
         else{
 
 
             socket.current.emit(
-
                 "privateMessage",
-
                 {
-
 
                     sender:userName,
 
-
                     receiver:selectedChat,
-
 
                     text:value
 
-
                 }
-
             );
 
 
 
             setUnread(prev=>({
 
-
                 ...prev,
 
-
                 [selectedChat]:0
-
 
             }));
 
 
-
         }
-
 
 
 
@@ -500,7 +460,6 @@ export default function Chat({
 
 
     }
-
 
 
 
@@ -536,42 +495,37 @@ export default function Chat({
 
     // PRIVATE TYPING
 
-
     useEffect(()=>{
 
 
+        // No typing indicator in group chat
 
-        if(selectedChat==="GROUP")
+        if(selectedChat==="GROUP"){
 
             return;
 
+        }
 
 
 
+
+
+
+        // User is typing
 
         if(text.trim()){
 
 
-
             socket.current.emit(
-
                 "privateTyping",
-
                 {
-
 
                     sender:userName,
 
-
                     receiver:selectedChat
 
-
                 }
-
-
             );
-
-
 
 
 
@@ -580,28 +534,19 @@ export default function Chat({
 
 
 
-
-            timer.current=setTimeout(()=>{
-
+            timer.current = setTimeout(()=>{
 
 
                 socket.current.emit(
-
                     "stopPrivateTyping",
-
                     {
-
 
                         sender:userName,
 
-
                         receiver:selectedChat
 
-
                     }
-
                 );
-
 
 
             },1000);
@@ -612,13 +557,54 @@ export default function Chat({
 
 
 
+        // Input cleared
+
+        else{
 
 
+            socket.current.emit(
+                "stopPrivateTyping",
+                {
+
+                    sender:userName,
+
+                    receiver:selectedChat
+
+                }
+            );
+
+
+        }
+
+
+
+
+
+        // Cleanup
 
         return ()=>{
 
 
             clearTimeout(timer.current);
+
+
+
+            if(selectedChat!=="GROUP"){
+
+
+                socket.current.emit(
+                    "stopPrivateTyping",
+                    {
+
+                        sender:userName,
+
+                        receiver:selectedChat
+
+                    }
+                );
+
+
+            }
 
 
         };
@@ -649,8 +635,6 @@ export default function Chat({
 
     return (
 
-
-
 <div className="relative h-screen flex items-center justify-center overflow-hidden">
 
 
@@ -678,7 +662,6 @@ export default function Chat({
 
 {/* SIDEBAR */}
 
-
 <Sidebar
 
 
@@ -698,7 +681,6 @@ lastMessages={lastMessages}
 
 
 unread={unread}
-
 
 
 />
@@ -798,7 +780,6 @@ handleKeyDown={handleKeyDown}
 
 
 </div>
-
 
     );
 
