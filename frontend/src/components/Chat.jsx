@@ -87,16 +87,125 @@
 
 
 
+// import { useState, useRef, useEffect } from "react";
+// import Header from "./Header";
+// import MessageList from "./MessageList";
+// import MessageInput from "./MessageInput";
+
+// export default function Chat({ socket, userName, messages, setMessages, typers }) {
+//   const [text, setText] = useState("");
+//   const timer = useRef(null);
+
+//   // ✅ SEND MESSAGE
+//   function sendMessage() {
+//     const t = text.trim();
+//     if (!t) return;
+
+//     const msg = {
+//       id: Date.now(),
+//       sender: userName,
+//       text: t,
+//       ts: Date.now(),
+//     };
+
+//     setMessages((prev) => [...prev, msg]);
+
+//     if (socket.current) {
+//       socket.current.emit("chatMessage", msg);
+//     }
+
+//     setText("");
+//   }
+
+//   // ✅ ENTER KEY HANDLING
+//   function handleKeyDown(e) {
+//     if (e.key === "Enter" && !e.shiftKey) {
+//       e.preventDefault();
+//       sendMessage();
+//     }
+//   }
+
+//   // ✅ TYPING INDICATOR
+//   useEffect(() => {
+//     if (!socket.current) return;
+
+//     if (text) {
+//       socket.current.emit("typing", userName);
+//       clearTimeout(timer.current);
+//     }
+
+//     timer.current = setTimeout(() => {
+//       socket.current.emit("stopTyping", userName);
+//     }, 1000);
+
+//     return () => clearTimeout(timer.current);
+//   }, [text, userName, socket]);
+
+//   return (
+//     <div className="relative h-screen flex items-center justify-center overflow-hidden">
+
+//       {/* Backgrounds */}
+//       <div className="mesh-bg" />
+//       <div className="grid-overlay" />
+//       <div className="scanline" />
+
+//       {/* Chat window */}
+//       <div className="relative z-10 w-full max-w-2xl h-[88vh] mx-4 glass-panel neon-border rounded-2xl flex flex-col overflow-hidden">
+
+//         {/* Top accent line */}
+//         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+
+//         <Header userName={userName} typers={typers} />
+//         <MessageList messages={messages} userName={userName} />
+//         <MessageInput
+//           text={text}
+//           setText={setText}
+//           sendMessage={sendMessage}
+//           handleKeyDown={handleKeyDown}
+//         />
+
+//         {/* Bottom accent line */}
+//         <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
+//       </div>
+
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+
+
 import { useState, useRef, useEffect } from "react";
 import Header from "./Header";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
+import Sidebar from "./Sidebar";
 
-export default function Chat({ socket, userName, messages, setMessages, typers }) {
+export default function Chat({
+  socket,
+  userName,
+
+  messages,
+
+  groupMessages,
+  setGroupMessages,
+
+  privateMessages,
+  setPrivateMessages,
+
+  onlineUsers,
+  selectedChat,
+  setSelectedChat,
+
+  typers,
+}) {
   const [text, setText] = useState("");
   const timer = useRef(null);
 
-  // ✅ SEND MESSAGE
   function sendMessage() {
     const t = text.trim();
     if (!t) return;
@@ -108,16 +217,33 @@ export default function Chat({ socket, userName, messages, setMessages, typers }
       ts: Date.now(),
     };
 
-    setMessages((prev) => [...prev, msg]);
+    // GROUP CHAT
+    if (selectedChat === "GROUP") {
+      setGroupMessages((prev) => [...prev, msg]);
 
-    if (socket.current) {
-      socket.current.emit("chatMessage", msg);
+      socket.current?.emit("chatMessage", msg);
+    }
+
+    // PRIVATE CHAT
+    else {
+      socket.current?.emit("privateMessage", {
+        sender: userName,
+        receiver: selectedChat,
+        text: t,
+      });
+
+      setPrivateMessages((prev) => ({
+        ...prev,
+        [selectedChat]: [
+          ...(prev[selectedChat] || []),
+          msg,
+        ],
+      }));
     }
 
     setText("");
   }
 
-  // ✅ ENTER KEY HANDLING
   function handleKeyDown(e) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -125,7 +251,6 @@ export default function Chat({ socket, userName, messages, setMessages, typers }
     }
   }
 
-  // ✅ TYPING INDICATOR
   useEffect(() => {
     if (!socket.current) return;
 
@@ -144,32 +269,56 @@ export default function Chat({ socket, userName, messages, setMessages, typers }
   return (
     <div className="relative h-screen flex items-center justify-center overflow-hidden">
 
-      {/* Backgrounds */}
       <div className="mesh-bg" />
       <div className="grid-overlay" />
       <div className="scanline" />
 
-      {/* Chat window */}
-      <div className="relative z-10 w-full max-w-2xl h-[88vh] mx-4 glass-panel neon-border rounded-2xl flex flex-col overflow-hidden">
+      <div className="relative z-10 w-full max-w-6xl h-[88vh] mx-4 glass-panel neon-border rounded-2xl overflow-hidden">
 
-        {/* Top accent line */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+        <div className="flex h-full">
 
-        <Header userName={userName} typers={typers} />
-        <MessageList messages={messages} userName={userName} />
-        <MessageInput
-          text={text}
-          setText={setText}
-          sendMessage={sendMessage}
-          handleKeyDown={handleKeyDown}
-        />
+          {/* SIDEBAR */}
+          <Sidebar
+            onlineUsers={onlineUsers}
+            userName={userName}
+            selectedChat={selectedChat}
+            setSelectedChat={setSelectedChat}
+          />
 
-        {/* Bottom accent line */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
+          {/* CHAT AREA */}
+          <div className="flex-1 flex flex-col relative">
+
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+
+            <Header
+              userName={userName}
+              typers={typers}
+            />
+
+            <MessageList
+              messages={messages}
+              userName={userName}
+            />
+
+            <MessageInput
+              text={text}
+              setText={setText}
+              sendMessage={sendMessage}
+              handleKeyDown={handleKeyDown}
+            />
+
+            <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
+
+          </div>
+
+        </div>
+
       </div>
 
     </div>
   );
 }
+
+
 
 
