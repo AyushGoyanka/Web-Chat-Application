@@ -45,61 +45,423 @@
 
 
 
-export default function Header({ userName, typers }) {
-  const others = typers.filter((t) => t !== userName);
+// export default function Header({ userName, typers }) {
+//   const others = typers.filter((t) => t !== userName);
+
+//   return (
+//     <div className="relative flex items-center px-5 py-4 border-b border-white/5 bg-white/[0.02]">
+
+//       {/* Left accent line */}
+//       <div className="absolute left-0 top-3 bottom-3 w-px bg-gradient-to-b from-transparent via-cyan-400 to-transparent" />
+
+//       {/* Logo / Brand */}
+//       <div className="flex items-center gap-3 flex-1">
+//         <div className="relative w-9 h-9 flex-shrink-0">
+//           <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-400/30 to-violet-500/30 border border-cyan-400/20 flex items-center justify-center">
+//             <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+//               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+//                 d="M13 10V3L4 14h7v7l9-11h-7z" />
+//             </svg>
+//           </div>
+//         </div>
+
+//         <div>
+//           <div className="font-display text-white font-bold text-sm tracking-wide leading-none mb-1">
+//             NEXUS<span className="neon-text">CHAT</span>
+//           </div>
+
+//           {others.length > 0 ? (
+//             <div className="flex items-center gap-1.5">
+//               <div className="flex gap-0.5">
+//                 <span className="typing-dot" />
+//                 <span className="typing-dot" />
+//                 <span className="typing-dot" />
+//               </div>
+//               <span className="text-[10px] text-cyan-400 tracking-wider">
+//                 {others.join(", ")} typing
+//               </span>
+//             </div>
+//           ) : (
+//             <div className="flex items-center gap-1.5">
+//               <div className="online-dot" />
+//               <span className="text-[10px] text-gray-500 tracking-widest uppercase">Live</span>
+//             </div>
+//           )}
+//         </div>
+//       </div>
+
+//       {/* User badge */}
+//       <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
+//         <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center text-[10px] font-bold text-black">
+//           {userName[0]?.toUpperCase()}
+//         </div>
+//         <span className="text-xs text-gray-400 tracking-wide">{userName}</span>
+//       </div>
+
+//     </div>
+//   );
+// }
+
+
+
+
+
+
+export default function Header({
+
+  userName,
+
+  selectedChat,
+
+  users,
+
+  typers
+
+
+}) {
+
+
+
+  const isGroup =
+    selectedChat === "GROUP";
+
+
+
+
+
+  const currentUser = users?.find(
+    (u)=>u.username === selectedChat
+  );
+
+
+
+
+
+  const typingUsers =
+    typers?.filter(
+      (t)=>t !== userName
+    ) || [];
+
+
+
+
+
 
   return (
-    <div className="relative flex items-center px-5 py-4 border-b border-white/5 bg-white/[0.02]">
 
-      {/* Left accent line */}
-      <div className="absolute left-0 top-3 bottom-3 w-px bg-gradient-to-b from-transparent via-cyan-400 to-transparent" />
 
-      {/* Logo / Brand */}
-      <div className="flex items-center gap-3 flex-1">
-        <div className="relative w-9 h-9 flex-shrink-0">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-400/30 to-violet-500/30 border border-cyan-400/20 flex items-center justify-center">
-            <svg className="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
-          </div>
-        </div>
+<div className="relative flex items-center px-5 py-4 border-b border-white/5 bg-white/[0.02]">
 
-        <div>
-          <div className="font-display text-white font-bold text-sm tracking-wide leading-none mb-1">
-            NEXUS<span className="neon-text">CHAT</span>
-          </div>
 
-          {others.length > 0 ? (
-            <div className="flex items-center gap-1.5">
-              <div className="flex gap-0.5">
-                <span className="typing-dot" />
-                <span className="typing-dot" />
-                <span className="typing-dot" />
-              </div>
-              <span className="text-[10px] text-cyan-400 tracking-wider">
-                {others.join(", ")} typing
-              </span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5">
-              <div className="online-dot" />
-              <span className="text-[10px] text-gray-500 tracking-widest uppercase">Live</span>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* User badge */}
-      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
-        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center text-[10px] font-bold text-black">
-          {userName[0]?.toUpperCase()}
-        </div>
-        <span className="text-xs text-gray-400 tracking-wide">{userName}</span>
-      </div>
 
-    </div>
-  );
+
+{/* Accent line */}
+
+<div className="absolute left-0 top-3 bottom-3 w-px bg-gradient-to-b from-transparent via-cyan-400 to-transparent" />
+
+
+
+
+
+
+
+<div className="flex items-center gap-3 flex-1">
+
+
+
+
+
+
+{/* Avatar */}
+
+
+<div className="relative w-9 h-9">
+
+
+<div className="w-9 h-9 rounded-lg bg-gradient-to-br from-cyan-400/30 to-violet-500/30 border border-cyan-400/20 flex items-center justify-center">
+
+
+<span className="text-cyan-400 font-bold">
+
+
+{
+
+isGroup
+
+?
+
+"🌎"
+
+:
+
+selectedChat?.[0]?.toUpperCase()
+
 }
 
 
+</span>
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<div>
+
+
+
+
+
+{/* NAME */}
+
+
+<div className="font-display text-white font-bold text-sm tracking-wide">
+
+
+{
+
+isGroup
+
+?
+
+"NEXUS"
+
+:
+
+selectedChat
+
+}
+
+
+
+{
+
+isGroup &&
+
+<span className="neon-text">
+
+CHAT
+
+</span>
+
+}
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+{/* STATUS / TYPING */}
+
+
+{
+
+typingUsers.length > 0
+
+?
+
+
+<div className="flex items-center gap-2">
+
+
+<div className="flex gap-1">
+
+
+<span className="typing-dot"/>
+
+<span className="typing-dot"/>
+
+<span className="typing-dot"/>
+
+
+</div>
+
+
+
+<span className="text-[10px] text-cyan-400">
+
+
+{typingUsers.join(", ")} typing...
+
+
+</span>
+
+
+
+</div>
+
+
+
+
+
+
+
+:
+
+
+
+<div className="flex items-center gap-2">
+
+
+
+<div
+
+
+className={
+
+`
+
+w-2 h-2 rounded-full
+
+
+${
+
+
+isGroup
+
+?
+
+"bg-green-400"
+
+:
+
+currentUser?.online
+
+?
+
+"bg-green-400 shadow-[0_0_8px_#22c55e]"
+
+:
+
+"bg-gray-600"
+
+
+
+}
+
+
+`
+
+}
+
+
+/>
+
+
+
+<span className="text-[10px] text-gray-500 uppercase tracking-widest">
+
+
+{
+
+
+isGroup
+
+?
+
+"Live Group"
+
+:
+
+currentUser?.online
+
+?
+
+"Online"
+
+:
+
+"Offline"
+
+
+
+}
+
+
+
+</span>
+
+
+
+
+</div>
+
+
+}
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+{/* MY USER BADGE */}
+
+
+
+<div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/10 bg-white/5">
+
+
+<div className="w-6 h-6 rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center text-[10px] font-bold text-black">
+
+
+{userName[0]?.toUpperCase()}
+
+
+</div>
+
+
+<span className="text-xs text-gray-400 tracking-wide">
+
+
+{userName}
+
+
+</span>
+
+
+</div>
+
+
+
+
+
+
+
+
+</div>
+
+
+  );
+
+}

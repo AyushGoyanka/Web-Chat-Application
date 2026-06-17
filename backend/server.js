@@ -51,94 +51,467 @@
 // });
 
 
+// import { createServer } from "node:http";
+// import express from "express";
+// import { Server } from "socket.io";
+
+// const app = express();
+// const server = createServer(app);
+
+// const io = new Server(server, {
+//   cors: {
+//     origin: "*",
+//   },
+// });
+
+// const ROOM = "group";
+// const users = {}; // username -> socketId
+
+// io.on("connection", (socket) => {
+//   console.log("connected:", socket.id);
+
+//   socket.on("joinRoom", async (userName) => {
+//     userName = userName.trim();
+
+//     if (users[userName]) {
+//       socket.emit("usernameTaken");
+//       return;
+//     }
+
+//     users[userName] = socket.id;
+
+//     await socket.join(ROOM);
+
+//     io.emit("onlineUsers", Object.keys(users));
+
+//     socket.to(ROOM).emit("roomNotice", `${userName} joined`);
+//   });
+
+//   socket.on("chatMessage", (msg) => {
+//     socket.to(ROOM).emit("chatMessage", msg);
+//   });
+
+//   socket.on("privateMessage", ({ sender, receiver, text }) => {
+//     const receiverSocketId = users[receiver];
+
+//     const msg = {
+//       id: Date.now(),
+//       sender,
+//       text,
+//       ts: Date.now(),
+//       private: true,
+//     };
+
+//     if (receiverSocketId) {
+//       io.to(receiverSocketId).emit("privateMessage", {
+//         ...msg,
+//         partner: sender,
+//       });
+//     }
+
+//     socket.emit("privateMessage", {
+//       ...msg,
+//       partner: receiver,
+//     });
+//   });
+
+//   socket.on("typing", (userName) => {
+//     socket.to(ROOM).emit("typing", userName);
+//   });
+
+//   socket.on("stopTyping", (userName) => {
+//     socket.to(ROOM).emit("stopTyping", userName);
+//   });
+
+//   socket.on("disconnect", () => {
+//     const username = Object.keys(users).find(
+//       (key) => users[key] === socket.id
+//     );
+
+//     if (username) {
+//       delete users[username];
+//       io.emit("onlineUsers", Object.keys(users));
+//     }
+//   });
+// });
+
+// app.get("/", (req, res) => {
+//   res.send("Server Running");
+// });
+
+// server.listen(4600, () => {
+//   console.log("http://localhost:4600");
+// });
+
+
+
+
 import { createServer } from "node:http";
 import express from "express";
 import { Server } from "socket.io";
 
+
 const app = express();
+
 const server = createServer(app);
 
-const io = new Server(server, {
-  cors: {
-    origin: "*",
-  },
+
+const io = new Server(server,{
+    cors:{
+        origin:"*",
+    }
 });
 
-const ROOM = "group";
-const users = {}; // username -> socketId
 
-io.on("connection", (socket) => {
-  console.log("connected:", socket.id);
 
-  socket.on("joinRoom", async (userName) => {
-    userName = userName.trim();
+const ROOM="group";
 
-    if (users[userName]) {
-      socket.emit("usernameTaken");
-      return;
-    }
 
-    users[userName] = socket.id;
+// username -> socket id
+const users={};
 
-    await socket.join(ROOM);
 
-    io.emit("onlineUsers", Object.keys(users));
+// socket id -> username
+const socketUsers={};
 
-    socket.to(ROOM).emit("roomNotice", `${userName} joined`);
-  });
 
-  socket.on("chatMessage", (msg) => {
-    socket.to(ROOM).emit("chatMessage", msg);
-  });
 
-  socket.on("privateMessage", ({ sender, receiver, text }) => {
-    const receiverSocketId = users[receiver];
 
-    const msg = {
-      id: Date.now(),
-      sender,
-      text,
-      ts: Date.now(),
-      private: true,
-    };
 
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("privateMessage", {
-        ...msg,
-        partner: sender,
-      });
-    }
+io.on("connection",(socket)=>{
 
-    socket.emit("privateMessage", {
-      ...msg,
-      partner: receiver,
+
+    console.log("Connected:",socket.id);
+
+
+
+
+
+    // JOIN USER
+
+    socket.on("joinRoom",(userName)=>{
+
+
+        userName=userName.trim();
+
+
+        if(!userName) return;
+
+
+
+        if(users[userName]){
+
+            socket.emit(
+                "usernameTaken"
+            );
+
+            return;
+        }
+
+
+
+
+        users[userName]=socket.id;
+
+        socketUsers[socket.id]=userName;
+
+
+
+        socket.join(ROOM);
+
+
+
+
+
+        io.emit(
+            "userStatus",
+            Object.keys(users).map(name=>({
+
+                username:name,
+
+                online:true
+
+            }))
+        );
+
+
+
+
+
+        socket.to(ROOM).emit(
+            "roomNotice",
+            `${userName} joined`
+        );
+
+
+
     });
-  });
 
-  socket.on("typing", (userName) => {
-    socket.to(ROOM).emit("typing", userName);
-  });
 
-  socket.on("stopTyping", (userName) => {
-    socket.to(ROOM).emit("stopTyping", userName);
-  });
 
-  socket.on("disconnect", () => {
-    const username = Object.keys(users).find(
-      (key) => users[key] === socket.id
+
+
+
+
+
+    // GROUP MESSAGE
+
+    socket.on(
+        "chatMessage",
+        (msg)=>{
+
+
+            // send only to other users
+
+            socket.to(ROOM)
+            .emit(
+                "chatMessage",
+                msg
+            );
+
+
+        }
     );
 
-    if (username) {
-      delete users[username];
-      io.emit("onlineUsers", Object.keys(users));
-    }
-  });
+
+
+
+
+
+
+
+
+    // PRIVATE MESSAGE
+
+
+    socket.on(
+        "privateMessage",
+        ({sender,receiver,text})=>{
+
+
+            const receiverSocket =
+            users[receiver];
+
+
+
+            const message={
+
+                id:Date.now(),
+
+                sender,
+
+                text,
+
+                ts:Date.now(),
+
+                private:true
+
+            };
+
+
+
+
+
+            // receiver
+
+            if(receiverSocket){
+
+
+                io.to(receiverSocket)
+                .emit(
+                    "privateMessage",
+                    {
+                        ...message,
+                        partner:sender
+                    }
+                );
+
+
+            }
+
+
+
+
+
+
+            // sender
+
+            socket.emit(
+                "privateMessage",
+                {
+                    ...message,
+                    partner:receiver
+                }
+            );
+
+
+
+
+        }
+    );
+
+
+
+
+
+
+
+
+
+    // TYPING
+
+
+    socket.on(
+        "privateTyping",
+        ({sender,receiver})=>{
+
+
+            const receiverSocket =
+            users[receiver];
+
+
+
+            if(receiverSocket){
+
+
+                io.to(receiverSocket)
+                .emit(
+                    "privateTyping",
+                    sender
+                );
+
+            }
+
+
+        }
+    );
+
+
+
+
+
+
+    socket.on(
+        "stopPrivateTyping",
+        ({sender,receiver})=>{
+
+
+            const receiverSocket =
+            users[receiver];
+
+
+
+            if(receiverSocket){
+
+
+                io.to(receiverSocket)
+                .emit(
+                    "stopPrivateTyping",
+                    sender
+                );
+
+            }
+
+
+        }
+    );
+
+
+
+
+
+
+
+
+
+    // DISCONNECT
+
+
+    socket.on(
+        "disconnect",
+        ()=>{
+
+
+            const username =
+            socketUsers[socket.id];
+
+
+
+            if(username){
+
+
+                delete users[username];
+
+                delete socketUsers[socket.id];
+
+
+
+
+
+                io.emit(
+                    "userOffline",
+                    username
+                );
+
+
+
+                io.emit(
+                    "userStatus",
+                    Object.keys(users)
+                    .map(name=>({
+
+                        username:name,
+
+                        online:true
+
+                    }))
+                );
+
+
+            }
+
+
+
+
+
+            console.log(
+                "Disconnected:",
+                socket.id
+            );
+
+
+
+        }
+    );
+
+
+
 });
 
-app.get("/", (req, res) => {
-  res.send("Server Running");
+
+
+
+
+
+app.get("/",(req,res)=>{
+
+    res.send(
+        "Server Running"
+    );
+
 });
 
-server.listen(4600, () => {
-  console.log("http://localhost:4600");
+
+
+
+
+
+server.listen(4600,()=>{
+
+
+    console.log(
+        "Server running on http://localhost:4600"
+    );
+
+
 });
