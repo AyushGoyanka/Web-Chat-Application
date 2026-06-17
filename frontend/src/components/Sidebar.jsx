@@ -1,107 +1,46 @@
-// export default function Sidebar({
-//   onlineUsers,
-//   userName,
-//   selectedChat,
-//   setSelectedChat,
-// }) {
-//   return (
-//     <div className="w-64 border-r border-white/10 bg-black/20 overflow-y-auto">
-
-//       <div className="p-4 border-b border-white/10">
-//         <h2 className="text-white font-bold">Chats</h2>
-//       </div>
-
-//       <div
-//         onClick={() => setSelectedChat("GROUP")}
-//         className={`p-4 cursor-pointer transition ${
-//           selectedChat === "GROUP"
-//             ? "bg-cyan-500/20"
-//             : "hover:bg-white/5"
-//         }`}
-//       >
-//         🌎 Group Chat
-//       </div>
-
-//       {onlineUsers
-//         .filter((u) => u !== userName)
-//         .map((user) => (
-//           <div
-//             key={user}
-//             onClick={() => setSelectedChat(user)}
-//             className={`p-4 cursor-pointer transition ${
-//               selectedChat === user
-//                 ? "bg-cyan-500/20"
-//                 : "hover:bg-white/5"
-//             }`}
-//           >
-//             <div className="flex items-center gap-2">
-//               <div className="w-2 h-2 rounded-full bg-green-400" />
-//               <span className="text-white">{user}</span>
-//             </div>
-//           </div>
-//         ))}
-//     </div>
-//   );
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 export default function Sidebar({
 
-  users,
+    users,
 
-  onlineUsers,
+    userName,
 
-  userName,
+    selectedChat,
 
-  selectedChat,
+    setSelectedChat,
 
-  setSelectedChat,
+    lastMessages,
 
-  lastMessages,
-
-  unread,
+    unread
 
 
 }) {
 
 
 
-  function openChat(name){
+    function openChat(name){
 
+        setSelectedChat(name);
 
-    setSelectedChat(name);
-
-
-  }
-
+    }
 
 
 
 
 
 
-  return (
+    return (
 
 
-<div className="w-64 border-r border-white/10 bg-black/20 overflow-y-auto">
+<div className="w-72 border-r border-white/10 bg-black/20 overflow-y-auto">
+
+
 
 
 
 
 
 {/* HEADER */}
+
 
 <div className="p-4 border-b border-white/10">
 
@@ -123,14 +62,13 @@ Chats
 
 
 
-{/* GROUP CHAT */}
+{/* GROUP */}
+
 
 
 <div
 
-
 onClick={()=>openChat("GROUP")}
-
 
 className={
 
@@ -159,27 +97,47 @@ selectedChat==="GROUP"
 >
 
 
-<div className="flex items-center gap-2">
+
+<div className="flex items-center gap-3">
 
 
-<div className="text-lg">
+<div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-xl">
 
 🌎
 
 </div>
 
 
-<span className="text-white">
+
+<div>
+
+
+<p className="text-white text-sm font-semibold">
 
 Group Chat
 
-</span>
+</p>
+
+
+<p className="text-xs text-gray-500">
+
+Live Room
+
+</p>
 
 
 </div>
 
 
+
 </div>
+
+
+
+</div>
+
+
+
 
 
 
@@ -201,16 +159,11 @@ users
 
 .filter(
 
-(user)=>
-
-user.username !== userName
+(user)=>user.username!==userName
 
 )
 
 .map((user)=>{
-
-
-const name=user.username;
 
 
 
@@ -221,22 +174,22 @@ return (
 <div
 
 
-key={name}
+key={user.username}
 
 
-onClick={()=>openChat(name)}
-
+onClick={()=>openChat(user.username)}
 
 
 className={
 
 `
-p-3 cursor-pointer transition border-b border-white/5
+
+p-3 border-b border-white/5 cursor-pointer transition
 
 
 ${
 
-selectedChat===name
+selectedChat===user.username
 
 ?
 
@@ -258,26 +211,74 @@ selectedChat===name
 
 
 
-
-<div className="flex items-center gap-3">
-
+<div className="flex gap-3 items-center">
 
 
 
 
 
 
-{/* STATUS DOT */}
+
+
+{/* AVATAR */}
+
+
+
+<div className="relative">
+
+
+
+{
+
+user.avatar
+
+?
+
+
+<img
+
+
+src={user.avatar}
+
+
+className="w-11 h-11 rounded-full object-cover border border-cyan-400/30"
+
+
+/>
+
+
+
+:
+
+
+<div className="w-11 h-11 rounded-full bg-gradient-to-br from-violet-400 to-cyan-400 flex items-center justify-center text-black font-bold">
+
+
+{user.username[0].toUpperCase()}
+
+
+</div>
+
+
+
+}
+
+
+
+
+
+
+{/* ONLINE DOT */}
+
 
 
 <div
-
 
 className={
 
 `
 
-w-2.5 h-2.5 rounded-full
+absolute bottom-0 right-0 w-3 h-3 rounded-full border border-black
 
 
 ${
@@ -286,11 +287,11 @@ user.online
 
 ?
 
-"bg-green-400 shadow-[0_0_8px_#22c55e]"
+"bg-green-400"
 
 :
 
-"bg-gray-600"
+"bg-gray-500"
 
 }
 
@@ -300,8 +301,13 @@ user.online
 }
 
 
-
 />
+
+
+
+</div>
+
+
 
 
 
@@ -315,17 +321,15 @@ user.online
 
 
 
-{/* USER NAME */}
 
 
-<div className="flex items-center justify-between">
+<div className="flex justify-between items-center">
 
 
-<span className="text-white text-sm">
 
+<span className="text-white text-sm font-medium">
 
-{name}
-
+{user.username}
 
 </span>
 
@@ -334,19 +338,17 @@ user.online
 
 
 
-{/* UNREAD BADGE */}
-
 
 
 {
 
-unread[name] > 0 &&
+unread[user.username]>0 &&
 
 
-<div className="bg-cyan-400 text-black text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">
+<div className="w-5 h-5 rounded-full bg-cyan-400 text-black text-[10px] font-bold flex items-center justify-center">
 
 
-{unread[name]}
+{unread[user.username]}
 
 
 </div>
@@ -356,8 +358,6 @@ unread[name] > 0 &&
 
 
 
-
-
 </div>
 
 
@@ -367,19 +367,24 @@ unread[name] > 0 &&
 
 
 
-{/* LAST MESSAGE */}
 
-
-<p className="text-[11px] text-gray-500 truncate">
-
+<p className="text-xs text-gray-500 truncate">
 
 {
 
-lastMessages[name]
+user.bio
 
 ?
 
-lastMessages[name]
+user.bio
+
+:
+
+lastMessages[user.username]
+
+?
+
+lastMessages[user.username]
 
 :
 
@@ -402,7 +407,6 @@ user.online
 
 
 
-</div>
 
 
 
@@ -410,7 +414,20 @@ user.online
 
 
 
+
+
+
+
 </div>
+
+
+
+
+
+
+
+</div>
+
 
 
 
@@ -420,15 +437,16 @@ user.online
 })
 
 
-}
 
+}
 
 
 
 </div>
 
 
-  );
+
+    );
 
 
 }

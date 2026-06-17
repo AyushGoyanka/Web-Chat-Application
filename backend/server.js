@@ -1,151 +1,3 @@
-// import { createServer } from 'node:http';
-// import express from 'express';
-// import { Server } from 'socket.io';
-
-// const app = express();
-
-// const server = createServer(app);
-
-// const io = new Server(server, {
-//     cors: {
-//         origin: '*',
-//     },
-// });
-
-// const ROOM = 'group';
-
-// io.on('connection', (socket) => {
-//     console.log('a user connected', socket.id);
-
-//     socket.on('joinRoom', async (userName) => {
-//         console.log(`${userName} is joining the group.`);
-
-//         await socket.join(ROOM);
-
-//         // send to all
-//         // io.to(ROOM).emit('roomNotice', userName);
-
-//         // broadcast
-//         socket.to(ROOM).emit('roomNotice', userName);
-//     });
-
-//     socket.on('chatMessage', (msg) => {
-//         socket.to(ROOM).emit('chatMessage', msg);
-//     });
-
-//     socket.on('typing', (userName) => {
-//         socket.to(ROOM).emit('typing', userName);
-//     });
-
-//     socket.on('stopTyping', (userName) => {
-//         socket.to(ROOM).emit('stopTyping', userName);
-//     });
-// });
-
-// app.get('/', (req, res) => {
-//     res.send('<h1>Hello world</h1>');
-// });
-
-// server.listen(4600, () => {
-//     console.log('server running at http://localhost:4600');
-// });
-
-
-// import { createServer } from "node:http";
-// import express from "express";
-// import { Server } from "socket.io";
-
-// const app = express();
-// const server = createServer(app);
-
-// const io = new Server(server, {
-//   cors: {
-//     origin: "*",
-//   },
-// });
-
-// const ROOM = "group";
-// const users = {}; // username -> socketId
-
-// io.on("connection", (socket) => {
-//   console.log("connected:", socket.id);
-
-//   socket.on("joinRoom", async (userName) => {
-//     userName = userName.trim();
-
-//     if (users[userName]) {
-//       socket.emit("usernameTaken");
-//       return;
-//     }
-
-//     users[userName] = socket.id;
-
-//     await socket.join(ROOM);
-
-//     io.emit("onlineUsers", Object.keys(users));
-
-//     socket.to(ROOM).emit("roomNotice", `${userName} joined`);
-//   });
-
-//   socket.on("chatMessage", (msg) => {
-//     socket.to(ROOM).emit("chatMessage", msg);
-//   });
-
-//   socket.on("privateMessage", ({ sender, receiver, text }) => {
-//     const receiverSocketId = users[receiver];
-
-//     const msg = {
-//       id: Date.now(),
-//       sender,
-//       text,
-//       ts: Date.now(),
-//       private: true,
-//     };
-
-//     if (receiverSocketId) {
-//       io.to(receiverSocketId).emit("privateMessage", {
-//         ...msg,
-//         partner: sender,
-//       });
-//     }
-
-//     socket.emit("privateMessage", {
-//       ...msg,
-//       partner: receiver,
-//     });
-//   });
-
-//   socket.on("typing", (userName) => {
-//     socket.to(ROOM).emit("typing", userName);
-//   });
-
-//   socket.on("stopTyping", (userName) => {
-//     socket.to(ROOM).emit("stopTyping", userName);
-//   });
-
-//   socket.on("disconnect", () => {
-//     const username = Object.keys(users).find(
-//       (key) => users[key] === socket.id
-//     );
-
-//     if (username) {
-//       delete users[username];
-//       io.emit("onlineUsers", Object.keys(users));
-//     }
-//   });
-// });
-
-// app.get("/", (req, res) => {
-//   res.send("Server Running");
-// });
-
-// server.listen(4600, () => {
-//   console.log("http://localhost:4600");
-// });
-
-
-
-
 import { createServer } from "node:http";
 import express from "express";
 import { Server } from "socket.io";
@@ -156,23 +8,32 @@ const app = express();
 const server = createServer(app);
 
 
+
 const io = new Server(server,{
+
     cors:{
-        origin:"*",
+        origin:"*"
     }
+
 });
+
+
 
 
 
 const ROOM="group";
 
 
+
+
 // username -> socket id
 const users={};
 
 
-// socket id -> username
+// socket id -> profile
 const socketUsers={};
+
+
 
 
 
@@ -187,65 +48,124 @@ io.on("connection",(socket)=>{
 
 
 
-    // JOIN USER
-
-    socket.on("joinRoom",(userName)=>{
-
-
-        userName=userName.trim();
-
-
-        if(!userName) return;
 
 
 
-        if(users[userName]){
+    // JOIN USER WITH PROFILE
 
-            socket.emit(
-                "usernameTaken"
+
+    socket.on(
+        "joinRoom",
+        (profile)=>{
+
+
+            const {
+                username,
+                bio,
+                avatar
+            } = profile;
+
+
+
+            if(!username?.trim()) return;
+
+
+
+
+            if(users[username]){
+
+
+                socket.emit(
+                    "usernameTaken"
+                );
+
+
+                return;
+
+            }
+
+
+
+
+
+
+
+            users[username]=socket.id;
+
+
+
+            socketUsers[socket.id]={
+
+                username,
+
+                bio,
+
+                avatar
+
+            };
+
+
+
+
+
+
+
+            socket.join(ROOM);
+
+
+
+
+
+
+
+
+            // SEND ONLINE USERS
+
+
+            io.emit(
+
+                "userStatus",
+
+                Object.values(socketUsers)
+
+                .map(user=>({
+
+                    ...user,
+
+                    online:true
+
+                }))
+
+
             );
 
-            return;
+
+
+
+
+
+
+
+
+            socket.to(ROOM).emit(
+
+                "roomNotice",
+
+                `${username} joined`
+
+            );
+
+
+
+
         }
 
-
-
-
-        users[userName]=socket.id;
-
-        socketUsers[socket.id]=userName;
-
-
-
-        socket.join(ROOM);
+    );
 
 
 
 
 
-        io.emit(
-            "userStatus",
-            Object.keys(users).map(name=>({
-
-                username:name,
-
-                online:true
-
-            }))
-        );
-
-
-
-
-
-        socket.to(ROOM).emit(
-            "roomNotice",
-            `${userName} joined`
-        );
-
-
-
-    });
 
 
 
@@ -256,19 +176,54 @@ io.on("connection",(socket)=>{
 
     // GROUP MESSAGE
 
+
     socket.on(
- "chatMessage",
- (msg)=>{
 
-
-    io.to(ROOM)
-    .emit(
         "chatMessage",
-        msg
+
+        (msg)=>{
+
+
+            const sender =
+            socketUsers[socket.id];
+
+
+
+            const message={
+
+                ...msg,
+
+
+                avatar:
+                sender?.avatar || null,
+
+
+                bio:
+                sender?.bio || ""
+
+            };
+
+
+
+
+
+            io.in(ROOM).emit(
+
+                "chatMessage",
+
+                message
+
+            );
+
+
+
+        }
+
     );
 
 
-});
+
+
 
 
 
@@ -280,27 +235,49 @@ io.on("connection",(socket)=>{
     // PRIVATE MESSAGE
 
 
+
     socket.on(
+
         "privateMessage",
+
         ({sender,receiver,text})=>{
 
 
-            const receiverSocket =
-            users[receiver];
+
+
+
+            const senderData =
+            socketUsers[socket.id];
+
+
 
 
 
             const message={
 
+
                 id:Date.now(),
+
 
                 sender,
 
+
                 text,
+
 
                 ts:Date.now(),
 
+
+                avatar:
+                senderData?.avatar || null,
+
+
+                bio:
+                senderData?.bio || "",
+
+
                 private:true
+
 
             };
 
@@ -308,18 +285,40 @@ io.on("connection",(socket)=>{
 
 
 
+
+
+
+
+            const receiverSocket =
+            users[receiver];
+
+
+
+
+
+
+
+
             // receiver
+
 
             if(receiverSocket){
 
 
                 io.to(receiverSocket)
+
                 .emit(
+
                     "privateMessage",
+
                     {
+
                         ...message,
+
                         partner:sender
+
                     }
+
                 );
 
 
@@ -330,21 +329,38 @@ io.on("connection",(socket)=>{
 
 
 
+
+
+
             // sender
 
+
             socket.emit(
+
                 "privateMessage",
+
                 {
+
                     ...message,
+
                     partner:receiver
+
                 }
+
             );
 
 
 
 
+
         }
+
     );
+
+
+
+
+
 
 
 
@@ -358,8 +374,11 @@ io.on("connection",(socket)=>{
 
 
     socket.on(
+
         "privateTyping",
+
         ({sender,receiver})=>{
+
 
 
             const receiverSocket =
@@ -371,16 +390,24 @@ io.on("connection",(socket)=>{
 
 
                 io.to(receiverSocket)
+
                 .emit(
+
                     "privateTyping",
+
                     sender
+
                 );
+
 
             }
 
 
         }
+
     );
+
+
 
 
 
@@ -388,8 +415,11 @@ io.on("connection",(socket)=>{
 
 
     socket.on(
+
         "stopPrivateTyping",
+
         ({sender,receiver})=>{
+
 
 
             const receiverSocket =
@@ -401,16 +431,25 @@ io.on("connection",(socket)=>{
 
 
                 io.to(receiverSocket)
+
                 .emit(
+
                     "stopPrivateTyping",
+
                     sender
+
                 );
+
 
             }
 
 
         }
+
     );
+
+
+
 
 
 
@@ -423,20 +462,24 @@ io.on("connection",(socket)=>{
     // DISCONNECT
 
 
+
     socket.on(
+
         "disconnect",
+
         ()=>{
 
 
-            const username =
+            const profile =
             socketUsers[socket.id];
 
 
 
-            if(username){
+            if(profile){
 
 
-                delete users[username];
+
+                delete users[profile.username];
 
                 delete socketUsers[socket.id];
 
@@ -445,23 +488,35 @@ io.on("connection",(socket)=>{
 
 
                 io.emit(
+
                     "userOffline",
-                    username
+
+                    profile.username
+
                 );
+
+
+
 
 
 
                 io.emit(
-                    "userStatus",
-                    Object.keys(users)
-                    .map(name=>({
 
-                        username:name,
+                    "userStatus",
+
+                    Object.values(socketUsers)
+
+                    .map(user=>({
+
+                        ...user,
 
                         online:true
 
                     }))
+
                 );
+
+
 
 
             }
@@ -470,19 +525,28 @@ io.on("connection",(socket)=>{
 
 
 
+
             console.log(
+
                 "Disconnected:",
+
                 socket.id
+
             );
 
 
 
+
         }
+
     );
 
 
 
 });
+
+
+
 
 
 
@@ -491,23 +555,37 @@ io.on("connection",(socket)=>{
 
 app.get("/",(req,res)=>{
 
+
     res.send(
+
         "Server Running"
-    );
 
-});
-
-
-
-
-
-
-server.listen(4600,()=>{
-
-
-    console.log(
-        "Server running on http://localhost:4600"
     );
 
 
 });
+
+
+
+
+
+
+
+
+server.listen(
+
+    4600,
+
+    ()=>{
+
+
+        console.log(
+
+            "Server running on http://localhost:4600"
+
+        );
+
+
+    }
+
+);

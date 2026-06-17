@@ -1,129 +1,355 @@
-// // import { useState } from "react";
-
-// // export default function NamePopup({ setUserName, setShowNamePopup, socket }) {
-// //   const [input, setInput] = useState("");
-
-// //   function handleSubmit(e) {
-// //     e.preventDefault();
-// //     if (!input.trim()) return;
-
-// //     socket.current.emit("joinRoom", input);
-// //     setUserName(input);
-// //     setShowNamePopup(false);
-// //   }
-
-// //   return (
-// //     <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
-      
-// //       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl w-80">
-        
-// //         <h2 className="text-lg font-semibold">Enter your name</h2>
-
-// //         <input
-// //           value={input}
-// //           onChange={(e) => setInput(e.target.value)}
-// //           className="border w-full p-2 mt-3"
-// //           placeholder="Your name"
-// //         />
-
-// //         <button className="w-full mt-3 bg-green-500 text-white py-2 rounded">
-// //           Join Chat
-// //         </button>
-
-// //       </form>
-// //     </div>
-// //   );
-// // }
-
-
-
-
-
-
-
-
-
-
-
-
-
 import { useState } from "react";
 
-export default function NamePopup({ setUserName, setShowNamePopup, socket }) {
-  const [input, setInput] = useState("");
-  const [focused, setFocused] = useState(false);
 
-  function handleSubmit(e) {
-    e.preventDefault();
-    if (!input.trim()) return;
-    socket.current.emit("joinRoom", input.trim());
-    setUserName(input.trim());
-    setShowNamePopup(false);
-  }
+export default function NamePopup({
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+    setUserName,
 
-      {/* Card */}
-      <div className="popup-enter relative z-10 w-[360px] glass-panel neon-border rounded-2xl p-8">
+    setProfile,
 
-        {/* Top accent line */}
-        <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
+    setShowNamePopup,
 
-        {/* Icon */}
-        <div className="flex justify-center mb-6">
-          <div className="relative w-16 h-16">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-cyan-400/20 to-violet-500/20 border border-cyan-400/30 flex items-center justify-center">
-              <svg className="w-7 h-7 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-            </div>
-            <div className="avatar-pulse absolute inset-0 rounded-full" />
-          </div>
-        </div>
+    socket
 
-        {/* Title */}
-        <h2 className="font-display text-center text-2xl font-800 text-white mb-1">
-          Enter the<span className="neon-text"> Nexus</span>
-        </h2>
-        <p className="text-center text-xs text-gray-500 mb-6 tracking-widest uppercase">
-          Real-time encrypted chat
-        </p>
 
-        {/* Input */}
-        <form onSubmit={handleSubmit}>
-          <div className={`input-wrapper relative border rounded-xl px-4 py-3 mb-4 transition-all duration-300
-            ${focused ? 'border-cyan-400/40' : 'border-white/10'} bg-white/5`}>
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-              className="w-full bg-transparent text-white text-sm placeholder-gray-600 outline-none tracking-wide"
-              placeholder="Your codename..."
-              autoFocus
-            />
-          </div>
+}) {
 
-          <button
-            type="submit"
-            disabled={!input.trim()}
-            className="send-btn relative w-full py-3 rounded-xl text-sm font-semibold text-white tracking-widest uppercase
-              disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:transform-none disabled:hover:shadow-none"
-          >
-            <span className="relative z-10">Initialize →</span>
-          </button>
-        </form>
 
-        {/* Bottom accent */}
-        <div className="absolute bottom-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-violet-500 to-transparent" />
-      </div>
-    </div>
-  );
+
+    const [username,setUsername]=useState("");
+
+    const [bio,setBio]=useState("");
+
+    const [avatar,setAvatar]=useState("");
+
+
+
+
+
+
+
+    function handleAvatar(e){
+
+
+        const file=e.target.files[0];
+
+
+        if(!file) return;
+
+
+
+        const reader=new FileReader();
+
+
+
+        reader.onload=()=>{
+
+
+            setAvatar(reader.result);
+
+
+        };
+
+
+
+        reader.readAsDataURL(file);
+
+
+
+    }
+
+
+
+
+
+
+
+
+    function handleSubmit(e){
+
+
+        e.preventDefault();
+
+
+
+        if(!username.trim()) return;
+
+
+
+
+
+
+        const profile={
+
+
+            username:username.trim(),
+
+
+            bio:bio.trim(),
+
+
+            avatar
+
+
+        };
+
+
+
+
+
+
+
+        socket.current.emit(
+
+            "joinRoom",
+
+            profile
+
+        );
+
+
+
+
+
+
+
+        setUserName(
+
+            username.trim()
+
+        );
+
+
+
+
+
+        setProfile(profile);
+
+
+
+
+        setShowNamePopup(false);
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+    return (
+
+
+
+<div className="fixed inset-0 z-50 flex items-center justify-center">
+
+
+
+<div className="absolute inset-0 bg-black/80 backdrop-blur-sm"/>
+
+
+
+
+
+
+
+<div className="relative z-10 w-[380px] glass-panel neon-border rounded-2xl p-8">
+
+
+
+
+
+<h2 className="text-white text-2xl font-bold text-center mb-2">
+
+Create Profile
+
+</h2>
+
+
+
+<p className="text-gray-500 text-xs text-center mb-6 uppercase tracking-widest">
+
+Join Nexus Chat
+
+</p>
+
+
+
+
+
+
+
+
+
+
+{/* Avatar */}
+
+
+
+<div className="flex justify-center mb-5">
+
+
+<label className="cursor-pointer">
+
+
+{
+
+avatar
+
+?
+
+
+<img
+
+src={avatar}
+
+className="w-20 h-20 rounded-full object-cover border border-cyan-400"
+
+/>
+
+
+:
+
+
+<div className="w-20 h-20 rounded-full bg-cyan-400/20 border border-cyan-400/30 flex items-center justify-center text-3xl">
+
++
+
+</div>
+
+
+
 }
 
 
 
+<input
+
+type="file"
+
+accept="image/*"
+
+className="hidden"
+
+onChange={handleAvatar}
+
+
+/>
+
+
+
+</label>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<form onSubmit={handleSubmit}>
+
+
+<input
+
+
+value={username}
+
+
+onChange={(e)=>setUsername(e.target.value)}
+
+
+placeholder="Username"
+
+
+className="w-full mb-3 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white outline-none"
+
+
+/>
+
+
+
+
+
+
+
+
+<textarea
+
+
+value={bio}
+
+
+onChange={(e)=>setBio(e.target.value)}
+
+
+placeholder="Bio"
+
+
+rows="3"
+
+
+className="w-full mb-5 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white outline-none resize-none"
+
+
+/>
+
+
+
+
+
+
+
+
+
+<button
+
+
+className="w-full py-3 rounded-xl bg-cyan-500 text-black font-bold uppercase tracking-widest"
+
+
+>
+
+
+Initialize →
+
+
+</button>
+
+
+
+
+
+
+</form>
+
+
+
+
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+    );
+
+
+}
