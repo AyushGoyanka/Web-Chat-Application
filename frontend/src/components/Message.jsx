@@ -1,36 +1,36 @@
-export default function Message({
-
-    m,
-
-    mine
-
-
-}) {
-
+export default function Message({ m, mine }) {
 
 
     function formatTime(ts){
 
-
         if(!ts) return "";
 
+        const d = new Date(ts);
 
-        const d=new Date(ts);
-
-
-        return `${
-
-            d.getHours()
-
-        }:${
-
-            d.getMinutes().toString().padStart(2,"0")
-
-        }`;
-
-
+        return `${d.getHours()}:${d.getMinutes()
+            .toString()
+            .padStart(2,"0")}`;
 
     }
+
+
+
+
+
+
+    function isOnlyEmoji(text){
+
+        if(!text) return false;
+
+
+        const emojiRegex =
+        /^(\p{Extended_Pictographic}|\s)+$/u;
+
+
+        return emojiRegex.test(text);
+
+    }
+
 
 
 
@@ -46,8 +46,7 @@ export default function Message({
 className={
 
 `
-
-flex gap-2 mb-3 items-end
+flex items-end gap-2 mb-3
 
 ${
 
@@ -85,35 +84,13 @@ mine
 
 
 
-(
-
-m.avatar
-
-?
-
-
-<img
-
-src={m.avatar}
-
-className="w-8 h-8 rounded-full object-cover"
-
-/>
-
-
-:
-
-
-<div className="w-8 h-8 rounded-full bg-violet-400 flex items-center justify-center text-xs font-bold">
+<div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-400 to-pink-400 flex items-center justify-center text-xs font-bold text-white">
 
 
 {m.sender?.[0]?.toUpperCase()}
 
 
 </div>
-
-
-)
 
 
 
@@ -133,7 +110,7 @@ className={
 
 `
 
-max-w-[70%]
+flex flex-col max-w-[70%]
 
 ${
 
@@ -149,11 +126,10 @@ mine
 
 }
 
-flex flex-col
-
 `
 
 }
+
 
 >
 
@@ -164,9 +140,14 @@ flex flex-col
 
 
 
+
+{/* Sender name */}
+
+
 {
 
 !mine &&
+
 
 
 <span className="text-[10px] text-gray-500 mb-1">
@@ -174,6 +155,7 @@ flex flex-col
 {m.sender}
 
 </span>
+
 
 
 }
@@ -192,7 +174,7 @@ className={
 
 `
 
-px-4 py-2 rounded-2xl border
+relative px-4 py-2.5 rounded-2xl border
 
 
 ${
@@ -205,7 +187,7 @@ mine
 
 :
 
-"bg-white/10 border-white/10 text-gray-200 rounded-bl-sm"
+"bg-white/[0.06] border-white/10 text-gray-200 rounded-bl-sm"
 
 }
 
@@ -219,9 +201,43 @@ mine
 
 
 
-<p className="text-sm break-words">
+
+
+
+
+
+<p
+
+className={
+
+`
+
+tracking-wide break-words
+
+${
+
+isOnlyEmoji(m.text)
+
+?
+
+"text-4xl"
+
+:
+
+"text-sm"
+
+}
+
+`
+
+}
+
+>
+
 
 {m.text}
+
+
 
 </p>
 
@@ -233,14 +249,17 @@ mine
 
 
 
-<div className="flex justify-end gap-2 mt-1">
+<div className="flex items-center justify-end gap-2 mt-1">
 
 
-<span className="text-[10px] text-gray-500">
+
+<span className="text-[10px] text-gray-500 font-mono">
 
 {formatTime(m.ts)}
 
 </span>
+
+
 
 
 
@@ -251,11 +270,13 @@ mine
 mine &&
 
 
+
 <span className="text-cyan-400 text-xs">
 
 ✓
 
 </span>
+
 
 
 }
@@ -270,7 +291,10 @@ mine &&
 
 
 
+
 </div>
+
+
 
 
 
@@ -297,36 +321,13 @@ mine &&
 
 
 
-(
-
-m.avatar
-
-?
-
-<img
-
-src={m.avatar}
-
-className="w-8 h-8 rounded-full object-cover"
-
-/>
-
-
-
-:
-
-
-<div className="w-8 h-8 rounded-full bg-cyan-400 flex items-center justify-center text-xs font-bold text-black">
+<div className="w-8 h-8 rounded-full bg-gradient-to-br from-cyan-400 to-violet-500 flex items-center justify-center text-xs font-bold text-black">
 
 
 {m.sender?.[0]?.toUpperCase()}
 
 
 </div>
-
-
-
-)
 
 
 
@@ -342,6 +343,5 @@ className="w-8 h-8 rounded-full object-cover"
 
 
     );
-
 
 }
