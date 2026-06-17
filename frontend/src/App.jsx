@@ -3,6 +3,8 @@ import { connectWS } from "./ws";
 import Chat from "./components/Chat";
 import NamePopup from "./components/NamePopup";
 
+
+
 export default function App() {
   const socket = useRef(null);
   const timer = useRef(null);
