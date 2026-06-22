@@ -1,130 +1,278 @@
 import express from "express";
-import bcrypt from "bcryptjs";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+
 import User from "../models/User.js";
+
 
 const router = express.Router();
 
 
+const SECRET = "NEXUS_SECRET_KEY";
+
+
+
+
 // REGISTER
+
 router.post("/register", async (req, res) => {
-  try {
-    const {
-      username,
-      email,
-      password,
-      bio,
-      avatar,
-    } = req.body;
 
-    const existingUser = await User.findOne({
-      $or: [
-        { username },
-        { email }
-      ]
-    });
+    try {
 
-    if (existingUser) {
-      return res.status(400).json({
-        message: "User already exists"
-      });
+
+        const {
+            username,
+            email,
+            password,
+            bio,
+            avatar
+        } = req.body;
+
+
+
+        const existingUser = await User.findOne({
+            email
+        });
+
+
+
+        if(existingUser){
+
+            return res.status(400).json({
+                message:"User already exists"
+            });
+
+        }
+
+
+
+
+        const hashedPassword = await bcrypt.hash(
+            password,
+            10
+        );
+
+
+
+
+        const user = await User.create({
+
+            username,
+
+            email,
+
+            password: hashedPassword,
+
+            bio,
+
+            avatar
+
+        });
+
+
+
+
+
+
+        const token = jwt.sign(
+
+            {
+                id:user._id,
+                username:user.username
+            },
+
+            SECRET,
+
+            {
+                expiresIn:"7d"
+            }
+
+        );
+
+
+
+
+
+
+        res.json({
+
+            token,
+
+
+            user:{
+
+                username:user.username,
+
+                email:user.email,
+
+                bio:user.bio,
+
+                avatar:user.avatar
+
+            }
+
+        });
+
+
+
     }
 
-    const hashedPassword =
-      await bcrypt.hash(password, 10);
+    catch(error){
 
-    const user = await User.create({
-      username,
-      email,
-      password: hashedPassword,
-      bio: bio || "",
-      avatar: avatar || "",
-    });
+        res.status(500).json({
 
-    res.status(201).json({
-      message: "User registered successfully",
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        bio: user.bio,
-        avatar: user.avatar,
-      }
-    });
+            message:error.message
 
-  } catch (error) {
+        });
 
-    console.error(error);
+    }
 
-    res.status(500).json({
-      message: "Server Error"
-    });
 
-  }
 });
+
+
+
+
+
+
 
 
 
 // LOGIN
-router.post("/login", async (req, res) => {
 
-  try {
 
-    const { email, password } = req.body;
+router.post("/login", async(req,res)=>{
 
-    const user =
-      await User.findOne({ email });
 
-    if (!user) {
-      return res.status(400).json({
-        message: "Invalid credentials"
-      });
+    try{
+
+
+        const {
+            email,
+            password
+        } = req.body;
+
+
+
+
+
+        const user = await User.findOne({
+
+            email
+
+        });
+
+
+
+
+
+        if(!user){
+
+            return res.status(404).json({
+
+                message:"User not found"
+
+            });
+
+        }
+
+
+
+
+
+        const validPassword = await bcrypt.compare(
+
+            password,
+
+            user.password
+
+        );
+
+
+
+
+
+        if(!validPassword){
+
+
+            return res.status(400).json({
+
+                message:"Invalid password"
+
+            });
+
+
+        }
+
+
+
+
+
+
+        const token = jwt.sign(
+
+            {
+                id:user._id,
+                username:user.username
+            },
+
+            SECRET,
+
+            {
+                expiresIn:"7d"
+            }
+
+        );
+
+
+
+
+
+
+
+        res.json({
+
+            token,
+
+
+            user:{
+
+
+                username:user.username,
+
+                email:user.email,
+
+                bio:user.bio,
+
+                avatar:user.avatar
+
+
+            }
+
+
+        });
+
+
+
+
+
     }
 
-    const isMatch =
-      await bcrypt.compare(
-        password,
-        user.password
-      );
 
-    if (!isMatch) {
-      return res.status(400).json({
-        message: "Invalid credentials"
-      });
+    catch(error){
+
+
+        res.status(500).json({
+
+            message:error.message
+
+        });
+
+
     }
 
-    const token = jwt.sign(
-      {
-        userId: user._id
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "7d"
-      }
-    );
-
-    res.json({
-      token,
-
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        bio: user.bio,
-        avatar: user.avatar,
-      }
-    });
-
-  } catch (error) {
-
-    console.error(error);
-
-    res.status(500).json({
-      message: "Server Error"
-    });
-
-  }
 
 });
+
 
 export default router;

@@ -82,7 +82,6 @@ socket.to(ROOM).emit(
 socket.on("chatMessage", async (msg) => {
 const sender = socketUsers[socket.id];
 
-
 const message = {
   ...msg,
   avatar: sender?.avatar || null,
@@ -108,8 +107,9 @@ io.to(ROOM).emit("chatMessage", message);
 });
 
 // PRIVATE MESSAGE
-socket.on("privateMessage", ({ sender, receiver, text }) => {
+socket.on("privateMessage", async ({ sender, receiver, text }) => {
 const senderData = socketUsers[socket.id];
+
 
 const message = {
   id: Date.now(),
@@ -120,6 +120,19 @@ const message = {
   bio: senderData?.bio || "",
   private: true,
 };
+
+try {
+  await Message.create({
+    sender,
+    receiver,
+    text,
+    isPrivate: true,
+    avatar: senderData?.avatar || "",
+    bio: senderData?.bio || "",
+  });
+} catch (error) {
+  console.error("Private Message Save Error:", error);
+}
 
 const receiverSocket = users[receiver];
 
@@ -141,7 +154,6 @@ socket.emit("privateMessage", {
 // TYPING
 socket.on("privateTyping", ({ sender, receiver }) => {
 const receiverSocket = users[receiver];
-
 
 if (receiverSocket) {
   io.to(receiverSocket).emit(
@@ -170,7 +182,6 @@ if (receiverSocket) {
 // DISCONNECT
 socket.on("disconnect", () => {
 const profile = socketUsers[socket.id];
-
 
 if (profile) {
   delete users[profile.username];
