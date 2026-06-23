@@ -15,14 +15,19 @@ connectDB();
 const app = express();
 
 app.use(cors());
-app.use(express.json({
-  limit: "50mb"
-}));
 
-app.use(express.urlencoded({
-  extended: true,
-  limit: "50mb"
-}));
+app.use(
+express.json({
+limit: "50mb",
+})
+);
+
+app.use(
+express.urlencoded({
+extended: true,
+limit: "50mb",
+})
+);
 
 // ROUTES
 app.use("/api/auth", authRoutes);
@@ -38,25 +43,33 @@ origin: "*",
 
 const ROOM = "group";
 
-// username -> socket id
+// username -> socketId
 const users = {};
 
-// socket id -> profile
+// socketId -> profile
 const socketUsers = {};
 
 io.on("connection", (socket) => {
 console.log("Connected:", socket.id);
 
-// JOIN USER WITH PROFILE
+// JOIN ROOM
 socket.on("joinRoom", (profile) => {
 const { username, bio, avatar } = profile;
 
-
 if (!username?.trim()) return;
 
+// Allow refresh/reconnect
 if (users[username]) {
-  socket.emit("usernameTaken");
-  return;
+  const oldSocketId = users[username];
+
+  delete socketUsers[oldSocketId];
+
+  const oldSocket =
+    io.sockets.sockets.get(oldSocketId);
+
+  if (oldSocket) {
+    oldSocket.disconnect(true);
+  }
 }
 
 users[username] = socket.id;
@@ -71,17 +84,18 @@ socket.join(ROOM);
 
 io.emit(
   "userStatus",
-  Object.values(socketUsers).map((user) => ({
-    ...user,
-    online: true,
-  }))
+  Object.values(socketUsers).map(
+    (user) => ({
+      ...user,
+      online: true,
+    })
+  )
 );
 
 socket.to(ROOM).emit(
   "roomNotice",
   `${username} joined`
 );
-
 
 });
 
@@ -91,7 +105,7 @@ const sender = socketUsers[socket.id];
 
 const message = {
   ...msg,
-  avatar: sender?.avatar || null,
+  avatar: sender?.avatar || "",
   bio: sender?.bio || "",
 };
 
@@ -105,107 +119,149 @@ try {
     bio: sender?.bio || "",
   });
 } catch (error) {
-  console.error("Message Save Error:", error);
+  console.error(
+    "Message Save Error:",
+    error
+  );
 }
 
-io.to(ROOM).emit("chatMessage", message);
-
+io.to(ROOM).emit(
+  "chatMessage",
+  message
+);
 
 });
 
 // PRIVATE MESSAGE
-socket.on("privateMessage", async ({ sender, receiver, text }) => {
-const senderData = socketUsers[socket.id];
+socket.on(
+"privateMessage",
+async ({
+sender,
+receiver,
+text,
+}) => {
+const senderData =
+socketUsers[socket.id];
 
-
-const message = {
-  id: Date.now(),
-  sender,
-  text,
-  ts: Date.now(),
-  avatar: senderData?.avatar || null,
-  bio: senderData?.bio || "",
-  private: true,
-};
-
-try {
-  await Message.create({
+  const message = {
+    id: Date.now(),
     sender,
-    receiver,
     text,
-    isPrivate: true,
-    avatar: senderData?.avatar || "",
+    ts: Date.now(),
+    avatar:
+      senderData?.avatar || "",
     bio: senderData?.bio || "",
-  });
-} catch (error) {
-  console.error("Private Message Save Error:", error);
+    private: true,
+  };
+
+  try {
+    await Message.create({
+      sender,
+      receiver,
+      text,
+      isPrivate: true,
+      avatar:
+        senderData?.avatar || "",
+      bio: senderData?.bio || "",
+    });
+  } catch (error) {
+    console.error(
+      "Private Message Save Error:",
+      error
+    );
+  }
+
+  const receiverSocket =
+    users[receiver];
+
+  if (receiverSocket) {
+    io.to(receiverSocket).emit(
+      "privateMessage",
+      {
+        ...message,
+        partner: sender,
+      }
+    );
+  }
+
+  socket.emit(
+    "privateMessage",
+    {
+      ...message,
+      partner: receiver,
+    }
+  );
 }
 
-const receiverSocket = users[receiver];
 
-if (receiverSocket) {
-  io.to(receiverSocket).emit("privateMessage", {
-    ...message,
-    partner: sender,
-  });
-}
-
-socket.emit("privateMessage", {
-  ...message,
-  partner: receiver,
-});
-
-
-});
+);
 
 // TYPING
-socket.on("privateTyping", ({ sender, receiver }) => {
-const receiverSocket = users[receiver];
+socket.on(
+"privateTyping",
+({ sender, receiver }) => {
+const receiverSocket =
+users[receiver];
 
-if (receiverSocket) {
-  io.to(receiverSocket).emit(
-    "privateTyping",
-    sender
-  );
+
+  if (receiverSocket) {
+    io.to(receiverSocket).emit(
+      "privateTyping",
+      sender
+    );
+  }
 }
 
 
-});
+);
 
-socket.on("stopPrivateTyping", ({ sender, receiver }) => {
-const receiverSocket = users[receiver];
+socket.on(
+"stopPrivateTyping",
+({ sender, receiver }) => {
+const receiverSocket =
+users[receiver];
 
 
-if (receiverSocket) {
-  io.to(receiverSocket).emit(
-    "stopPrivateTyping",
-    sender
-  );
+  if (receiverSocket) {
+    io.to(receiverSocket).emit(
+      "stopPrivateTyping",
+      sender
+    );
+  }
 }
 
 
-});
+);
 
 // DISCONNECT
 socket.on("disconnect", () => {
-const profile = socketUsers[socket.id];
+const profile =
+socketUsers[socket.id];
 
 if (profile) {
   delete users[profile.username];
   delete socketUsers[socket.id];
 
-  io.emit("userOffline", profile.username);
+  io.emit(
+    "userOffline",
+    profile.username
+  );
 
   io.emit(
     "userStatus",
-    Object.values(socketUsers).map((user) => ({
+    Object.values(
+      socketUsers
+    ).map((user) => ({
       ...user,
       online: true,
     }))
   );
 }
 
-console.log("Disconnected:", socket.id);
+console.log(
+  "Disconnected:",
+  socket.id
+);
 
 
 });
@@ -218,8 +274,13 @@ mongodb: "Connected",
 });
 });
 
-server.listen(process.env.PORT || 4600, () => {
+server.listen(
+process.env.PORT || 4600,
+() => {
 console.log(
-`Server running on http://localhost:${process.env.PORT || 4600}`
+`Server running on http://localhost:${
+        process.env.PORT || 4600
+      }`
 );
-});
+}
+);
