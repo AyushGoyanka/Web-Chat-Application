@@ -1,13 +1,9 @@
-import {useState,useRef,useEffect} from "react";
-
+import { useState, useRef, useEffect } from "react";
 
 import Header from "./Header";
 import MessageList from "./MessageList";
 import MessageInput from "./MessageInput";
 import Sidebar from "./Sidebar";
-
-
-
 
 export default function Chat({
 
@@ -31,328 +27,202 @@ lastMessages,
 
 unread,
 
-setUnread
+setUnread,
+
+logout
+
+}) {
+
+const [text, setText] = useState("");
+
+const timer = useRef(null);
+
+function sendMessage() {
 
 
-}){
+const value = text.trim();
 
+if (!value) return;
 
-const [text,setText]=useState("");
+const msg = {
 
-const timer=useRef(null);
+  id: Date.now(),
 
+  sender: userName,
 
+  text: value,
 
-
-function sendMessage(){
-
-
-const value=text.trim();
-
-
-if(!value) return;
-
-
-
-const msg={
-
-id:Date.now(),
-
-sender:userName,
-
-text:value,
-
-ts:Date.now()
+  ts: Date.now()
 
 };
 
+if (selectedChat === "GROUP") {
 
+  socket.current.emit(
+    "chatMessage",
+    msg
+  );
 
+} else {
 
-if(selectedChat==="GROUP"){
+  socket.current.emit(
+    "privateMessage",
+    {
+      sender: userName,
+      receiver: selectedChat,
+      text: value
+    }
+  );
 
-
-socket.current.emit(
-
-"chatMessage",
-
-msg
-
-);
-
-
+  setUnread(prev => ({
+    ...prev,
+    [selectedChat]: 0
+  }));
 }
-
-else{
-
-
-socket.current.emit(
-
-"privateMessage",
-
-{
-
-sender:userName,
-
-receiver:selectedChat,
-
-text:value
-
-}
-
-);
-
-
-
-setUnread(prev=>({
-
-...prev,
-
-[selectedChat]:0
-
-}));
-
-
-}
-
-
 
 setText("");
 
 
-
 }
 
+function handleKeyDown(e) {
 
 
+if (e.key === "Enter" && !e.shiftKey) {
 
+  e.preventDefault();
 
-
-
-function handleKeyDown(e){
-
-
-if(e.key==="Enter" && !e.shiftKey){
-
-e.preventDefault();
-
-sendMessage();
+  sendMessage();
 
 }
 
 
 }
 
+useEffect(() => {
 
+if (selectedChat === "GROUP")
+  return;
 
+if (text.trim()) {
 
+  socket.current.emit(
+    "privateTyping",
+    {
+      sender: userName,
+      receiver: selectedChat
+    }
+  );
 
+  clearTimeout(timer.current);
 
-useEffect(()=>{
+  timer.current = setTimeout(() => {
 
+    socket.current.emit(
+      "stopPrivateTyping",
+      {
+        sender: userName,
+        receiver: selectedChat
+      }
+    );
 
-if(selectedChat==="GROUP")
+  }, 1000);
 
-return;
+} else {
 
-
-
-if(text.trim()){
-
-
-socket.current.emit(
-
-"privateTyping",
-
-{
-
-sender:userName,
-
-receiver:selectedChat
-
-}
-
-);
-
-
-
-clearTimeout(timer.current);
-
-
-
-timer.current=setTimeout(()=>{
-
-
-socket.current.emit(
-
-"stopPrivateTyping",
-
-{
-
-sender:userName,
-
-receiver:selectedChat
+  socket.current.emit(
+    "stopPrivateTyping",
+    {
+      sender: userName,
+      receiver: selectedChat
+    }
+  );
 
 }
 
-);
+return () => clearTimeout(timer.current);
 
 
-
-},1000);
-
-
-
-}
-
-else{
-
-
-socket.current.emit(
-
-"stopPrivateTyping",
-
-{
-
-sender:userName,
-
-receiver:selectedChat
-
-}
-
-);
-
-
-}
-
-
-
-
-return ()=>clearTimeout(timer.current);
-
-
-
-},[text,selectedChat,userName]);
-
-
-
-
-
-
-
-
+}, [text, selectedChat, userName]);
 
 return (
 
 <div className="relative h-screen flex items-center justify-center overflow-hidden">
 
+  <div className="mesh-bg" />
 
-<div className="mesh-bg"/>
+  <div className="grid-overlay" />
 
-<div className="grid-overlay"/>
+  <div className="scanline" />
 
-<div className="scanline"/>
+  <div className="relative z-10 w-full max-w-6xl h-[88vh] mx-4 glass-panel neon-border rounded-2xl overflow-hidden">
 
+    <div className="flex h-full">
 
+      <Sidebar
 
+        users={users}
 
-<div className="relative z-10 w-full max-w-6xl h-[88vh] mx-4 glass-panel neon-border rounded-2xl overflow-hidden">
+        userName={userName}
 
+        profile={profile}
 
+        selectedChat={selectedChat}
 
-<div className="flex h-full">
+        setSelectedChat={setSelectedChat}
 
+        lastMessages={lastMessages}
 
+        unread={unread}
 
-<Sidebar
+        logout={logout}
 
+      />
 
-users={users}
+      <div className="flex-1 flex flex-col">
 
-userName={userName}
+        <Header
 
-selectedChat={selectedChat}
+          userName={userName}
 
-setSelectedChat={setSelectedChat}
+          profile={profile}
 
-lastMessages={lastMessages}
+          selectedChat={selectedChat}
 
-unread={unread}
+          users={users}
 
-/>
+          typers={typers}
 
+        />
 
+        <MessageList
 
+          messages={messages || []}
 
+          userName={userName}
 
-<div className="flex-1 flex flex-col">
+        />
 
+        <MessageInput
 
+          text={text}
 
-<Header
+          setText={setText}
 
+          sendMessage={sendMessage}
 
-userName={userName}
+          handleKeyDown={handleKeyDown}
 
-profile={profile}
+        />
 
-selectedChat={selectedChat}
+      </div>
 
-users={users}
+    </div>
 
-typers={typers}
-
-/>
-
-
-
-
-<MessageList
-
-
-messages={messages || []}
-
-userName={userName}
-
-/>
-
-
-
-
-
-<MessageInput
-
-
-text={text}
-
-setText={setText}
-
-sendMessage={sendMessage}
-
-handleKeyDown={handleKeyDown}
-
-/>
-
-
-
+  </div>
 
 </div>
-
-
-
-</div>
-
-
-
-</div>
-
-
-
-</div>
-
 
 );
-
-
 
 }
