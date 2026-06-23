@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+      lowercase: true,
       trim: true,
     },
 
@@ -21,14 +22,15 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
-    bio: {
+    // Forgot Password fields
+    resetPasswordToken: {
       type: String,
-      default: "",
+      default: null,
     },
 
-    avatar: {
-      type: String,
-      default: "",
+    resetPasswordExpires: {
+      type: Date,
+      default: null,
     },
   },
   {
@@ -36,4 +38,6 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-export default mongoose.model("User", userSchema);
+const User = mongoose.model("User", userSchema);
+
+export default User;
