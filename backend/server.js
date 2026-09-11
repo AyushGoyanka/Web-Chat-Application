@@ -17,16 +17,16 @@ const app = express();
 app.use(cors());
 
 app.use(
-express.json({
-limit: "50mb",
-})
+  express.json({
+    limit: "50mb",
+  }),
 );
 
 app.use(
-express.urlencoded({
-extended: true,
-limit: "50mb",
-})
+  express.urlencoded({
+    extended: true,
+    limit: "50mb",
+  }),
 );
 
 // ROUTES
@@ -36,9 +36,9 @@ app.use("/api/messages", messageRoutes);
 const server = createServer(app);
 
 const io = new Server(server, {
-cors: {
-origin: "*",
-},
+  cors: {
+    origin: "*",
+  },
 });
 
 const ROOM = "group";
@@ -50,237 +50,163 @@ const users = {};
 const socketUsers = {};
 
 io.on("connection", (socket) => {
-console.log("Connected:", socket.id);
+  console.log("Connected:", socket.id);
 
-// JOIN ROOM
-socket.on("joinRoom", (profile) => {
-const { username, bio, avatar } = profile;
+  // JOIN ROOM
+  socket.on("joinRoom", (profile) => {
+    const { username, bio, avatar } = profile;
 
-if (!username?.trim()) return;
+    if (!username?.trim()) return;
 
-// Allow refresh/reconnect
-if (users[username]) {
-  const oldSocketId = users[username];
+    // Allow refresh/reconnect
+    if (users[username]) {
+      const oldSocketId = users[username];
 
-  delete socketUsers[oldSocketId];
+      delete socketUsers[oldSocketId];
 
-  const oldSocket =
-    io.sockets.sockets.get(oldSocketId);
+      const oldSocket = io.sockets.sockets.get(oldSocketId);
 
-  if (oldSocket) {
-    oldSocket.disconnect(true);
-  }
-}
+      if (oldSocket) {
+        oldSocket.disconnect(true);
+      }
+    }
 
-users[username] = socket.id;
+    users[username] = socket.id;
 
-socketUsers[socket.id] = {
-  username,
-  bio,
-  avatar,
-};
+    socketUsers[socket.id] = {
+      username,
+      bio,
+      avatar,
+    };
 
-socket.join(ROOM);
+    socket.join(ROOM);
 
-io.emit(
-  "userStatus",
-  Object.values(socketUsers).map(
-    (user) => ({
-      ...user,
-      online: true,
-    })
-  )
-);
-
-socket.to(ROOM).emit(
-  "roomNotice",
-  `${username} joined`
-);
-
-});
-
-// GROUP MESSAGE
-socket.on("chatMessage", async (msg) => {
-const sender = socketUsers[socket.id];
-
-const message = {
-  ...msg,
-  avatar: sender?.avatar || "",
-  bio: sender?.bio || "",
-};
-
-try {
-  await Message.create({
-    sender: msg.sender,
-    receiver: "GROUP",
-    text: msg.text,
-    isPrivate: false,
-    avatar: sender?.avatar || "",
-    bio: sender?.bio || "",
-  });
-} catch (error) {
-  console.error(
-    "Message Save Error:",
-    error
-  );
-}
-
-io.to(ROOM).emit(
-  "chatMessage",
-  message
-);
-
-});
-
-// PRIVATE MESSAGE
-socket.on(
-"privateMessage",
-async ({
-sender,
-receiver,
-text,
-}) => {
-const senderData =
-socketUsers[socket.id];
-
-  const message = {
-    id: Date.now(),
-    sender,
-    text,
-    ts: Date.now(),
-    avatar:
-      senderData?.avatar || "",
-    bio: senderData?.bio || "",
-    private: true,
-  };
-
-  try {
-    await Message.create({
-      sender,
-      receiver,
-      text,
-      isPrivate: true,
-      avatar:
-        senderData?.avatar || "",
-      bio: senderData?.bio || "",
-    });
-  } catch (error) {
-    console.error(
-      "Private Message Save Error:",
-      error
+    io.emit(
+      "userStatus",
+      Object.values(socketUsers).map((user) => ({
+        ...user,
+        online: true,
+      })),
     );
-  }
 
-  const receiverSocket =
-    users[receiver];
+    socket.to(ROOM).emit("roomNotice", `${username} joined`);
+  });
 
-  if (receiverSocket) {
-    io.to(receiverSocket).emit(
-      "privateMessage",
-      {
+  // GROUP MESSAGE
+  socket.on("chatMessage", async (msg) => {
+    const sender = socketUsers[socket.id];
+
+    const message = {
+      ...msg,
+      avatar: sender?.avatar || "",
+      bio: sender?.bio || "",
+    };
+
+    try {
+      await Message.create({
+        sender: msg.sender,
+        receiver: "GROUP",
+        text: msg.text,
+        isPrivate: false,
+        avatar: sender?.avatar || "",
+        bio: sender?.bio || "",
+      });
+    } catch (error) {
+      console.error("Message Save Error:", error);
+    }
+
+    io.to(ROOM).emit("chatMessage", message);
+  });
+
+  // PRIVATE MESSAGE
+  socket.on("privateMessage", async ({ sender, receiver, text }) => {
+    const senderData = socketUsers[socket.id];
+
+    const message = {
+      id: Date.now(),
+      sender,
+      text,
+      ts: Date.now(),
+      avatar: senderData?.avatar || "",
+      bio: senderData?.bio || "",
+      private: true,
+    };
+
+    try {
+      await Message.create({
+        sender,
+        receiver,
+        text,
+        isPrivate: true,
+        avatar: senderData?.avatar || "",
+        bio: senderData?.bio || "",
+      });
+    } catch (error) {
+      console.error("Private Message Save Error:", error);
+    }
+
+    const receiverSocket = users[receiver];
+
+    if (receiverSocket) {
+      io.to(receiverSocket).emit("privateMessage", {
         ...message,
         partner: sender,
-      }
-    );
-  }
+      });
+    }
 
-  socket.emit(
-    "privateMessage",
-    {
+    socket.emit("privateMessage", {
       ...message,
       partner: receiver,
+    });
+  });
+
+  // TYPING
+  socket.on("privateTyping", ({ sender, receiver }) => {
+    const receiverSocket = users[receiver];
+
+    if (receiverSocket) {
+      io.to(receiverSocket).emit("privateTyping", sender);
     }
-  );
-}
+  });
 
+  socket.on("stopPrivateTyping", ({ sender, receiver }) => {
+    const receiverSocket = users[receiver];
 
-);
+    if (receiverSocket) {
+      io.to(receiverSocket).emit("stopPrivateTyping", sender);
+    }
+  });
 
-// TYPING
-socket.on(
-"privateTyping",
-({ sender, receiver }) => {
-const receiverSocket =
-users[receiver];
+  // DISCONNECT
+  socket.on("disconnect", () => {
+    const profile = socketUsers[socket.id];
 
+    if (profile) {
+      delete users[profile.username];
+      delete socketUsers[socket.id];
 
-  if (receiverSocket) {
-    io.to(receiverSocket).emit(
-      "privateTyping",
-      sender
-    );
-  }
-}
+      io.emit("userOffline", profile.username);
 
+      io.emit(
+        "userStatus",
+        Object.values(socketUsers).map((user) => ({
+          ...user,
+          online: true,
+        })),
+      );
+    }
 
-);
-
-socket.on(
-"stopPrivateTyping",
-({ sender, receiver }) => {
-const receiverSocket =
-users[receiver];
-
-
-  if (receiverSocket) {
-    io.to(receiverSocket).emit(
-      "stopPrivateTyping",
-      sender
-    );
-  }
-}
-
-
-);
-
-// DISCONNECT
-socket.on("disconnect", () => {
-const profile =
-socketUsers[socket.id];
-
-if (profile) {
-  delete users[profile.username];
-  delete socketUsers[socket.id];
-
-  io.emit(
-    "userOffline",
-    profile.username
-  );
-
-  io.emit(
-    "userStatus",
-    Object.values(
-      socketUsers
-    ).map((user) => ({
-      ...user,
-      online: true,
-    }))
-  );
-}
-
-console.log(
-  "Disconnected:",
-  socket.id
-);
-
-
-});
+    console.log("Disconnected:", socket.id);
+  });
 });
 
 app.get("/", (req, res) => {
-res.json({
-message: "Server Running",
-mongodb: "Connected",
-});
+  res.json({
+    message: "Server Running",
+    mongodb: "Connected",
+  });
 });
 
-server.listen(
-process.env.PORT || 4600,
-() => {
-console.log(
-`Server running on http://localhost:${
-        process.env.PORT || 4600
-      }`
-);
-}
-);
+server.listen(process.env.PORT || 4600, () => {
+  console.log(`Server running on http://localhost:${process.env.PORT || 4600}`);
+});
