@@ -8,6 +8,7 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
 import messageRoutes from "./routes/messageRoutes.js";
 import Message from "./models/Message.js";
+import aiRoutes from './routes/aiRoutes.js';
 
 dotenv.config();
 connectDB();
@@ -32,6 +33,7 @@ app.use(
 // ROUTES
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
+app.use('/api/ai', aiRoutes);
 
 const server = createServer(app);
 
@@ -49,15 +51,27 @@ const users = {};
 // socketId -> profile
 const socketUsers = {};
 
+
+
+
+
+
+
+
+
+
 io.on("connection", (socket) => {
   console.log("Connected:", socket.id);
 
   // JOIN ROOM
   socket.on("joinRoom", (profile) => {
     const { username, bio, avatar } = profile;
-
+    
+    //Validation check.
     if (!username?.trim()) return;
 
+
+    //Agar mera user exist krra hai to uska old socket hata ke new socket id do.
     // Allow refresh/reconnect
     if (users[username]) {
       const oldSocketId = users[username];
@@ -73,11 +87,19 @@ io.on("connection", (socket) => {
 
     users[username] = socket.id;
 
+
+    
     socketUsers[socket.id] = {
       username,
       bio,
       avatar,
     };
+    
+    
+    // Code me ROOM ek normal JavaScript variable (const ROOM = "group";) zaroor hai, lekin Socket.io ka apna ek andaruni (built-in) 
+    // feature hota hai jise hum "Rooms" kehte hain.
+    // Jab aap Socket.io ke method .to() ya .in() me koi bhi string (jaise "group") pass karte hain, to Socket.io use ek
+    //  virtual chat room samajhta hai.
 
     socket.join(ROOM);
 
@@ -93,6 +115,7 @@ io.on("connection", (socket) => {
   });
 
   // GROUP MESSAGE
+  //Jabbhi koi user chatMessage event trigger krega to ye Event handler chalega.
   socket.on("chatMessage", async (msg) => {
     const sender = socketUsers[socket.id];
 
@@ -144,9 +167,11 @@ io.on("connection", (socket) => {
     } catch (error) {
       console.error("Private Message Save Error:", error);
     }
-
+// How do you detect when a user disconnects?
+    //Uss particular user kii Socket id nikal raha jisko message bhejna hai.
     const receiverSocket = users[receiver];
 
+    //Agar vo user exist karra hai to usko ye message bhejdo using to() function.
     if (receiverSocket) {
       io.to(receiverSocket).emit("privateMessage", {
         ...message,

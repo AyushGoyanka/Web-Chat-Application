@@ -163,7 +163,7 @@ localStorage.getItem(
     if (!username) return;
 
     const res = await axios.get(
-      `http://localhost:4600/api/messages/${username}`
+      `https://chat-backend-1-zh6a.onrender.com/api/messages/${username}`
     );
 
     const group =
